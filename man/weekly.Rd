@@ -32,9 +32,9 @@ and adjusted for overdispersion.
 \details{
 Test counts and reports are aggregated by week, with weeks running Monday
 through Sunday (they are defined this way so that a Monday morning update
-has data for a full week).  The date assigned is the date of the last day
-in the week (normally Sunday, but it could be otherwise for a midweek update
-or if no results were reported on Sunday).  The positive test fraction is
+has data for a full week).  The date assigned is the date of the last day (Sunday)
+of the week.
+The positive test fraction is
 calculated as the number of positive tests for the week divided by the total
 number of tests for the week.
 

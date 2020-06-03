@@ -14,6 +14,7 @@ newdata <- read_csv(dataurl, col_types = ctypes) %>%
 
 newdata$date <- lubridate::mdy(newdata$date)
 strt <- as.Date('2019-12-30')              # Last Monday before 2020-01-01
+wk0date <- as.Date('2020-01-05')
 newdata <- filter(newdata, date >= strt)
 
 ## Check for changes in the data
@@ -35,7 +36,7 @@ t <- as.numeric(newdata$date - strt)
 newdata$week <- as.integer(floor(t/7))
 weekly <- group_by(newdata, HealthDistrict, week) %>%
   mutate(fpos=npos/ntest) %>%
-  summarise(date=max(date), ntest=sum(ntest), npos=sum(npos), varpos=var(fpos), nday=n()) %>%
+  summarise(date=max(week)*7 + wk0date, ntest=sum(ntest), npos=sum(npos), varpos=var(fpos), nday=n()) %>%
   mutate(fpos=npos/ntest) %>%
   ungroup() %>%
   arrange(date)
