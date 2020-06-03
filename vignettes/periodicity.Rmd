@@ -1,0 +1,60 @@
+---
+title: "Periodicity in daily test counts"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Periodicity in daily test counts}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(vdhcovid)
+library(dplyr)
+library(ggplot2)
+```
+
+The daily number of tests has a strong periodic signal.  
+```{r dataprep}
+apr15 <- as.Date('2020-04-15')
+dailytotal <- 
+  group_by(daily, date) %>% 
+  summarise(ntest=sum(ntest)) %>%
+  filter(date >= apr15)
+trendfit <- lm(ntest~date, dailytotal)
+dailytotal$ntest_detrend <- dailytotal$ntest - predict(trendfit)
+N <- nrow(dailytotal)
+Nhalf <- floor(N/2 + 1)
+ggplot(dailytotal, aes(x=date, y=ntest)) + geom_line(size=1.2, color='MidnightBlue') +
+  theme_bw()
+```
+
+We can do a spectral analysis to work out what frequencies are represented.
+```{r powerspec}
+ps <- fft(dailytotal$ntest_detrend)[1:Nhalf]
+f <- (seq_along(ps) - 1) / N
+pltps <- data.frame(f=f, ps=Mod(ps))
+ggplot(pltps, aes(x=f, y=ps)) + 
+  geom_col(width=0.25*f[2], fill='MidnightBlue') + 
+  ylab('Spectral density') +
+  xlab('Frequency (1/day)') +
+  theme_bw()
+```
+
+```{r perextract}
+top3 <- order(pltps$ps, decreasing=TRUE)[1:3]
+f3 <- f[top3]
+per3 <- signif(1/f3, 2)
+```
+The top 3 modes have periods of `r paste(per3, collapse=', ')` days.  The first
+of these confirms what we expected; there is a weekly periodicity that is probably
+due to less testing and test processing on weekends.  The third is probably due
+to weekends being two days long.  The middle one is about half a week; it's probably
+related to the fact that the character of the periodicity is more like $\sin^2 t$
+than $\sin t$.
