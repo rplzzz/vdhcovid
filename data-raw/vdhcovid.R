@@ -17,7 +17,13 @@ strt <- as.Date('2019-12-30')              # Last Monday before 2020-01-01
 newdata <- filter(newdata, date >= strt)
 
 ## Check for changes in the data
-## (TBW once we have an old version of the data to compare to)
+chknew <- semi_join(newdata, vdhcovid::daily, by=c('date', 'HealthDistrict'))
+changed <- anti_join(vdhcovid::daily, newdata, by=c('date', 'HealthDistrict', 'ntest', 'npos'))
+if(nrow(changed) > 0) {
+  stop('One or more existing entries have changed.  See table "changed" for list.')
+}
+
+
 daily <- arrange(newdata, date)
 
 ## There seems to be a strong weekly cycle, so create a version that's aggregated

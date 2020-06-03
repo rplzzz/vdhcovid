@@ -1,16 +1,26 @@
 Package: vdhcovid
 Type: Package
-Title: What the Package Does (Title Case)
-Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Title: COVID-19 data by health district from Virginia Department of Health
+Version: 1.0.0
+Authors@R: 
+    person(given = "Robert",
+           family = "Link",
+           role = c("aut", "cre", "ard"),
+           email = "rl8z@virginia.edu",
+           comment = c(ORCID = "0000-0002-7071-248X"))
+Description: Virginia Department of Health data on COVID-19 PCR tests performed
+    and positive test results by health district.  Data is presented as raw daily
+    counts and as weekly aggregates adjusted for overdispersion.
+License: GPL-3
 Encoding: UTF-8
 LazyData: true
+Depends: R (>= 3.3.3)
 Suggests: 
     knitr,
+    dplyr,
+    readr,
+    ggplot2,
+    here,
     rmarkdown
 VignetteBuilder: knitr
 RoxygenNote: 7.1.0
