@@ -2,6 +2,8 @@ library(dplyr)
 library(readr)
 library(here)
 
+source(here('data-raw','constants.R'))
+
 dataurl <-
   'https://www.vdh.virginia.gov/content/uploads/sites/182/2020/05/VDH-COVID-19-PublicUseDataset-Tests_by-LabReportDate.csv'
 ctypes <- 'cciiii'
@@ -13,8 +15,6 @@ newdata <- read_csv(dataurl, col_types = ctypes) %>%
   filter(date != 'Not Reported', !HealthDistrict %in% c('Out of State', 'Unknown'))
 
 newdata$date <- lubridate::mdy(newdata$date)
-strt <- as.Date('2019-12-30')              # Last Monday before 2020-01-01
-wk0date <- as.Date('2020-01-05')
 newdata <- filter(newdata, date >= strt)
 
 ## Check for changes in the data
