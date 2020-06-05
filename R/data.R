@@ -13,7 +13,7 @@
 #'
 #' @source Virginia Department of Health
 #' \url{https://www.vdh.virginia.gov/coronavirus/}
-"daily"
+"vadailytests"
 
 #' Weekly VDH COVID-19 testing data by health district
 #'
@@ -61,4 +61,4 @@
 #' }
 #' @source Virginia Department of Health
 #' \url{https://www.vdh.virginia.gov/coronavirus/}
-"weekly"
+"vaweeklytests"

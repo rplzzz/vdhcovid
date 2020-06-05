@@ -24,7 +24,7 @@ The daily number of tests has a strong periodic signal.
 ```{r dataprep}
 apr15 <- as.Date('2020-04-15')
 dailytotal <- 
-  group_by(daily, date) %>% 
+  group_by(vadailytests, date) %>% 
   summarise(ntest=sum(ntest)) %>%
   filter(date >= apr15)
 trendfit <- lm(ntest~date, dailytotal)

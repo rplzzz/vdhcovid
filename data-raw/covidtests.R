@@ -18,14 +18,14 @@ wk0date <- as.Date('2020-01-05')
 newdata <- filter(newdata, date >= strt)
 
 ## Check for changes in the data
-chknew <- semi_join(newdata, vdhcovid::daily, by=c('date', 'HealthDistrict'))
-changed <- anti_join(vdhcovid::daily, newdata, by=c('date', 'HealthDistrict', 'ntest', 'npos'))
+chknew <- semi_join(newdata, vdhcovid::vadailytests, by=c('date', 'HealthDistrict'))
+changed <- anti_join(vdhcovid::vadailytests, newdata, by=c('date', 'HealthDistrict', 'ntest', 'npos'))
 if(nrow(changed) > 0) {
   stop('One or more existing entries have changed.  See table "changed" for list.')
 }
 
 
-daily <- arrange(newdata, date)
+vadailytests <- arrange(newdata, date)
 
 ## There seems to be a strong weekly cycle, so create a version that's aggregated
 ## by week.  The data also seems to be way overdispersed, so within each weekly
@@ -34,7 +34,7 @@ daily <- arrange(newdata, date)
 ## than the reported number of tests
 t <- as.numeric(newdata$date - strt)
 newdata$week <- as.integer(floor(t/7))
-weekly <- group_by(newdata, HealthDistrict, week) %>%
+vaweeklytests <- group_by(newdata, HealthDistrict, week) %>%
   mutate(fpos=npos/ntest) %>%
   summarise(date=max(week)*7 + wk0date, ntest=sum(ntest), npos=sum(npos), varpos=var(fpos), nday=n()) %>%
   mutate(fpos=npos/ntest) %>%
@@ -47,11 +47,11 @@ weekly <- group_by(newdata, HealthDistrict, week) %>%
 ## N, N+1, and N+2.  With this simplification the variance is fpos*(1-fpos)/Neff.
 ## The Neff derived this way will not in general be an integer.  The neff, nposeff,
 ## are rounded to the nearest integer, and the fpos reported is nposeff/neff.
-weekly$neff <-
-  if_else(weekly$ntest > 32 & weekly$nday > 4 & weekly$npos > 0,
-          as.integer(round(weekly$fpos * (1-weekly$fpos) / weekly$varpos)),
-          weekly$ntest)
-weekly$neff <- pmin(weekly$neff, weekly$ntest)          # Don't let neff be larger than ntest
-weekly$nposeff <- as.integer(round(weekly$neff * weekly$fpos))
+vaweeklytests$neff <-
+  if_else(vaweeklytests$ntest > 32 & vaweeklytests$nday > 4 & vaweeklytests$npos > 0,
+          as.integer(round(vaweeklytests$fpos * (1-vaweeklytests$fpos) / vaweeklytests$varpos)),
+          vaweeklytests$ntest)
+vaweeklytests$neff <- pmin(vaweeklytests$neff, vaweeklytests$ntest)          # Don't let neff be larger than ntest
+vaweeklytests$nposeff <- as.integer(round(vaweeklytests$neff * vaweeklytests$fpos))
 
-usethis::use_data(daily, weekly, overwrite=TRUE)
+usethis::use_data(vadailytests, vaweeklytests, overwrite=TRUE)
