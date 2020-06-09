@@ -20,8 +20,14 @@ newdata <- filter(newdata, date >= strt)
 ## Check for changes in the data
 chknew <- semi_join(newdata, vdhcovid::vadailytests, by=c('date', 'HealthDistrict'))
 changed <- anti_join(vdhcovid::vadailytests, newdata, by=c('date', 'HealthDistrict', 'ntest', 'npos'))
-if(nrow(changed) > 0) {
-  stop('One or more existing entries have changed.  See table "changed" for list.')
+nchg <- nrow(changed)
+if(nchg > 0) {
+  if(exists('ACCEPT_CHANGES') && ACCEPT_CHANGES) {
+    warning(nchg, ' changed entries found.  ACCEPT_CHANGES is set, so new entries will be adopted')
+  }
+  else {
+    stop(nchg, ' changed entries.  See table "changed" for list.')
+  }
 }
 
 
