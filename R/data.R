@@ -103,3 +103,36 @@
 #' @source Virginia Department of Health
 #' \url{https://www.vdh.virginia.gov/coronavirus/}
 "vaweeklycases"
+
+#' Weekly effective test statistics by locality
+#'
+#' Weekly total number of tests and number of positive tests, by loality, adjusted
+#' for overdispersion.
+#'
+#' This dataset takes the effective number of tests in each health district from
+#' \code{\link{vaweeklytests}} and downscales it to the localities within the
+#' district.
+#'
+#' The downscaling proceeds in two steps.  First, for each week we compute the
+#' ratio of effective count to nominal count \eqn{\rho = N_e/N} in the district.
+#' The actual case counts from \code{\link{vaweeklycases}} are reduced by this
+#' factor and rounded to the nearest integer; however, for localities that
+#' recorded at least one case, this effective case count has a minimum of 1.
+#' Each locality is assigned a base number of tests equal to its effective case
+#' count.  The remaining effective tests in the district are assigned proportional to
+#' population, rounding to the nearest integer and ensuring that the sum of the
+#' assigned tests are equal to the total number of effective tests left to be
+#' assigned (i.e., after the ones assigned for confirmed cases are deducted.)
+#'
+#' @format Data frame with 6 columns
+#' \describe{
+#' \item{week}{Week number.}
+#' \item{date}{Date of the last day of the week.}
+#' \item{fips}{FIPS code for the locality.}
+#' \item{locality}{Name of the locality.}
+#' \item{ntesteff}{Effective number of statistically independent tests performed
+#' in the locality for the week.}
+#' \item{nposeff}{Effective number of statistically independent positive test
+#' results obtained in the locality for the week.}
+#' }
+"va_weekly_ntest_county"
