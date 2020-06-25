@@ -15,7 +15,7 @@ newdata <- read_csv(dataurl, col_types = ctypes) %>%
   filter(date != 'Not Reported', !HealthDistrict %in% c('Out of State', 'Unknown'))
 
 newdata$date <- lubridate::mdy(newdata$date)
-newdata <- filter(newdata, date >= strt)
+newdata <- filter(newdata, date >= strt, !is.na(HealthDistrict))
 
 ## Check for changes in the data
 chknew <- semi_join(newdata, vdhcovid::vadailytests, by=c('date', 'HealthDistrict'))
