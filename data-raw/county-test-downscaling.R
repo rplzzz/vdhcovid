@@ -7,8 +7,7 @@ library('vdhcovid')
 
 
 ### Splendid.  Now we need to allocate the tests to individual jurisdictions within
-### each district.  Start by loading the table of counties and districts.  It's
-### pretty awesome that they give us the area of each county, but we won't need it.
+### each district.  Start by loading the table of counties and districts.
 vahd <-
   readr::read_csv(here('data-raw','va-health-districts.csv'),
                   col_types = 'iccnic') %>%

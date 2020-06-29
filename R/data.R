@@ -136,3 +136,22 @@
 #' results obtained in the locality for the week.}
 #' }
 "va_weekly_ntest_county"
+
+#' Virginia locality characteristics
+#'
+#' Provide static data such as population and population density for Virginia
+#' localities.  While not technically related to COVID-19, these statistics are
+#' sometimes useful in modeling.
+#'
+#' @format Data frame with 7 columns
+#' \describe{
+#' \item{fips}{FIPS code for the locality}
+#' \item{county}{Name of the locality}
+#' \item{district}{VDH health district the locality belongs to}
+#' \item{areaSqMile}{Area of the locality in square miles}
+#' \item{population}{Population of the locality}
+#' \item{locality}{Alternate form of the locality name.  This is sometimes useful
+#' for joining to tables from VA government sources.}
+#' \item{popdens}{Average population density in the locality.}
+#' }
+"valocalities"
