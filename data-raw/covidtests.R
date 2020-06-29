@@ -11,7 +11,7 @@ newdata <- read_csv(dataurl, col_types = ctypes) %>%
   select(date=`Lab Report Date`,
          HealthDistrict=`Health District`,
          ntest=`Number of PCR Testing Encounters`,
-         npos=`Number of Positive PCR Tests`) %>%
+         npos=`Number of Positive PCR Testing Encounters`) %>%
   filter(date != 'Not Reported', !HealthDistrict %in% c('Out of State', 'Unknown'))
 
 newdata$date <- lubridate::mdy(newdata$date)
