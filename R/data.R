@@ -143,7 +143,7 @@
 #' localities.  While not technically related to COVID-19, these statistics are
 #' sometimes useful in modeling.
 #'
-#' @format Data frame with 7 columns
+#' @format Data frame with 8 columns
 #' \describe{
 #' \item{fips}{FIPS code for the locality}
 #' \item{county}{Name of the locality}
@@ -153,5 +153,6 @@
 #' \item{locality}{Alternate form of the locality name.  This is sometimes useful
 #' for joining to tables from VA government sources.}
 #' \item{popdens}{Average population density in the locality.}
+#' \item{stdpopdens}{Standardized average population density in the locality.}
 #' }
 "valocalities"

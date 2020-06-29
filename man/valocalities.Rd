@@ -5,7 +5,7 @@
 \alias{valocalities}
 \title{Virginia locality characteristics}
 \format{
-Data frame with 7 columns
+Data frame with 8 columns
 \describe{
 \item{fips}{FIPS code for the locality}
 \item{county}{Name of the locality}
@@ -15,6 +15,7 @@ Data frame with 7 columns
 \item{locality}{Alternate form of the locality name.  This is sometimes useful
 for joining to tables from VA government sources.}
 \item{popdens}{Average population density in the locality.}
+\item{stdpopdens}{Standardized average population density in the locality.}
 }
 }
 \usage{
