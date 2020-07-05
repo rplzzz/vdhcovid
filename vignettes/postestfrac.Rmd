@@ -1,0 +1,49 @@
+---
+title: "Positive test fraction"
+author: "Robert Link"
+date: "7/5/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library('vdhcovid')
+library('ggplot2')
+library('ggthemes')
+```
+
+## Statewide weekly positive test fraction
+
+```{r statewide}
+ptfstate <- dplyr::group_by(vaweeklytests, week, date) %>%
+  summarise(ntest=sum(ntest), npos=sum(npos), neff=sum(neff), nposeff=sum(nposeff)) %>%
+  mutate(fpos=npos/ntest, fposeff=nposeff/neff)
+
+ggplot(ptfstate, aes(x=date)) + 
+  geom_point(aes(y=fpos, color='nominal'), size=1.5) +
+  geom_point(aes(y=fposeff, color='effective'), size=1.5) +
+  scale_color_solarized() + 
+  ylab('Positive test fraction') +
+  coord_cartesian(ylim=c(0,0.25)) + 
+  labs(color='type') +
+  theme_bw(14)
+```
+
+## Thomas Jefferson District Positive Test Fraction
+
+```{r tjdist}
+pftj <-
+  dplyr::filter(vaweeklytests, HealthDistrict=='Thomas Jefferson') %>%
+  group_by(week, date) %>%
+  summarise(ntest=sum(ntest), npos=sum(npos), neff=sum(neff), nposeff=sum(nposeff)) %>%
+  mutate(fpos=npos/ntest, fposeff=nposeff/neff)
+
+ggplot(pftj, aes(x=date)) + 
+  geom_point(aes(y=fpos, color='nominal'), size=1.5) +
+  geom_point(aes(y=fposeff, color='effective'), size=1.5) +
+  scale_color_solarized() + 
+  ylab('Positive test fraction') +
+  labs(color='type') +
+  theme_bw(14)
+```
+
