@@ -21,7 +21,7 @@ ptfstate <- dplyr::group_by(vaweeklytests, week, date) %>%
 
 ggplot(ptfstate, aes(x=date)) + 
   geom_point(aes(y=fpos, color='nominal'), size=1.5) +
-  geom_point(aes(y=fposeff, color='effective'), size=1.5) +
+  geom_point(aes(y=fposeff, color='effective'), size=1.5, position=position_jitter(width=0, height=0.005)) +
   scale_color_solarized() + 
   ylab('Positive test fraction') +
   coord_cartesian(ylim=c(0,0.25)) + 
@@ -40,7 +40,7 @@ pftj <-
 
 ggplot(pftj, aes(x=date)) + 
   geom_point(aes(y=fpos, color='nominal'), size=1.5) +
-  geom_point(aes(y=fposeff, color='effective'), size=1.5) +
+  geom_point(aes(y=fposeff, color='effective'), size=1.5, position=position_jitter(width=0, height=0.005)) +
   scale_color_solarized() + 
   ylab('Positive test fraction') +
   labs(color='type') +
