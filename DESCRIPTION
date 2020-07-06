@@ -1,7 +1,7 @@
 Package: vdhcovid
 Type: Package
 Title: COVID-19 data by health district from Virginia Department of Health
-Version: 1.7.0
+Version: 1.8.0
 Authors@R: 
     person(given = "Robert",
            family = "Link",
