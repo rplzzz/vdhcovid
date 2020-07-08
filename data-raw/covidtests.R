@@ -14,7 +14,7 @@ newdata <- read_csv(dataurl, col_types = ctypes) %>%
          npos=`Number of Positive PCR Testing Encounters`) %>%
   filter(date != 'Not Reported', !HealthDistrict %in% c('Out of State', 'Unknown'))
 
-newdata$date <- lubridate::ymd(newdata$date)
+newdata$date <- lubridate::mdy(newdata$date)
 newdata <- filter(newdata, date >= strt, !is.na(HealthDistrict))
 
 ## Check for changes in the data
