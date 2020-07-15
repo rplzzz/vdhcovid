@@ -2,7 +2,9 @@
 title: "Positive test fraction"
 author: "Robert Link"
 date: "7/5/2020"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -10,6 +12,7 @@ knitr::opts_chunk$set(echo = FALSE)
 library('vdhcovid')
 library('ggplot2')
 library('ggthemes')
+library('dplyr')
 ```
 
 ## Statewide weekly positive test fraction
@@ -47,3 +50,19 @@ ggplot(pftj, aes(x=date)) +
   theme_bw(14)
 ```
 
+```{r ffxdist}
+pfffx <-
+  dplyr::filter(vaweeklytests, HealthDistrict=='Fairfax') %>%
+  group_by(week, date) %>%
+  summarise(ntest=sum(ntest), npos=sum(npos), neff=sum(neff), nposeff=sum(nposeff)) %>%
+  mutate(fpos=npos/ntest, fposeff=nposeff/neff)
+
+ggplot(pfffx, aes(x=date)) + 
+  geom_point(aes(y=fpos, color='nominal'), size=1.5) +
+  geom_point(aes(y=fposeff, color='effective'), size=1.5, position=position_jitter(width=0, height=0.005)) +
+  scale_color_solarized() + 
+  ylab('Positive test fraction') +
+  labs(color='type', title='Fairfax Health District') +
+  coord_cartesian(ylim=c(0,0.4)) +
+  theme_bw(14)
+```
