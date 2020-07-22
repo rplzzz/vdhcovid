@@ -13,6 +13,33 @@ library('vdhcovid')
 library('ggplot2')
 library('ggthemes')
 library('dplyr')
+
+plotdist <- function(district, yrng=NULL) 
+{
+  pltdata <-
+    dplyr::filter(vaweeklytests, HealthDistrict==district) %>%
+    group_by(week, date) %>%
+    summarise(ntest=sum(ntest), npos=sum(npos), neff=sum(neff), nposeff=sum(nposeff)) %>%
+    mutate(fpos=npos/ntest, fposeff=nposeff/neff)
+
+  plt <- 
+    ggplot(pltdata, aes(x=date)) + 
+    geom_point(aes(y=fpos, color='nominal'), size=1.5) +
+    geom_point(aes(y=fposeff, color='effective'), size=1.5,
+               position=position_jitter(width=0, height=0.005)) +
+    scale_color_solarized() + 
+    ylab('Positive test fraction') +
+    labs(color='type', title=paste(district, 'Health District')) +
+    theme_bw(14)
+  
+  if(is.null(yrng)) {
+    plt
+  }
+  else {
+    plt + coord_cartesian(ylim=yrng)
+  }
+}
+
 ```
 
 ## Statewide weekly positive test fraction
@@ -32,37 +59,41 @@ ggplot(ptfstate, aes(x=date)) +
   theme_bw(14)
 ```
 
-## Thomas Jefferson District Positive Test Fraction
+## Positive test fractions for particular districts of interest
+
+### Thomas Jefferson District
 
 ```{r tjdist}
-pftj <-
-  dplyr::filter(vaweeklytests, HealthDistrict=='Thomas Jefferson') %>%
-  group_by(week, date) %>%
-  summarise(ntest=sum(ntest), npos=sum(npos), neff=sum(neff), nposeff=sum(nposeff)) %>%
-  mutate(fpos=npos/ntest, fposeff=nposeff/neff)
-
-ggplot(pftj, aes(x=date)) + 
-  geom_point(aes(y=fpos, color='nominal'), size=1.5) +
-  geom_point(aes(y=fposeff, color='effective'), size=1.5, position=position_jitter(width=0, height=0.005)) +
-  scale_color_solarized() + 
-  ylab('Positive test fraction') +
-  labs(color='type', title='Thomas Jefferson Health District') +
-  theme_bw(14)
+plotdist('Thomas Jefferson')
 ```
 
+### Fairfax District
+
 ```{r ffxdist}
-pfffx <-
-  dplyr::filter(vaweeklytests, HealthDistrict=='Fairfax') %>%
-  group_by(week, date) %>%
+plotdist('Fairfax', c(0,0.4))
+```
+
+## Portsmouth District 
+
+```{r portsmouth}
+plotdist('Portsmouth')
+```
+
+## Summary plot of all districts
+
+```{r alldist, fig.width=10, fig.height=20}
+ptfall <-
+  group_by(vaweeklytests, week, date, HealthDistrict) %>%
   summarise(ntest=sum(ntest), npos=sum(npos), neff=sum(neff), nposeff=sum(nposeff)) %>%
   mutate(fpos=npos/ntest, fposeff=nposeff/neff)
 
-ggplot(pfffx, aes(x=date)) + 
+ggplot(ptfall, aes(x=date)) + 
   geom_point(aes(y=fpos, color='nominal'), size=1.5) +
   geom_point(aes(y=fposeff, color='effective'), size=1.5, position=position_jitter(width=0, height=0.005)) +
+  facet_wrap(~HealthDistrict, ncol=4, scales='free_y') +
   scale_color_solarized() + 
   ylab('Positive test fraction') +
-  labs(color='type', title='Fairfax Health District') +
-  coord_cartesian(ylim=c(0,0.4)) +
+  labs(color='type', title='Positive test fractions by district') +
+  #coord_cartesian(ylim=c(0,0.4)) +
   theme_bw(14)
 ```
