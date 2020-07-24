@@ -68,11 +68,12 @@
 #' Raw data from VDH.  Note that it starts on 17 March, which is a few weeks later
 #' than the testing data.
 #'
-#' @format Data frame with 7 columns
+#' @format Data frame with 8 columns
 #' \describe{
 #' \item{date}{Date of the report.}
 #' \item{fips}{FIPS code for the locality.}
 #' \item{locality}{Name of the locality (city or county).}
+#' \item{county}{Alternate format for the name of the locality.}
 #' \item{HealthDistrict}{VDH health district the locality belongs to.}
 #' \item{cases}{Cumulative COVID-19 cases in the locality.}
 #' \item{hosp}{Cumulative hospitalizations for COVID-19 in the locality.}
@@ -88,11 +89,12 @@
 #' instead of cumulative cases.  As with \code{\link{vaweeklytests}}, the date
 #' is given for the last day of the week.
 #'
-#' @format Data frame with 8 columns
+#' @format Data frame with 9 columns
 #' \describe{
 #' \item{date}{Date of the last day of the week.}
 #' \item{fips}{FIPS code for the locality.}
 #' \item{locality}{Name of the locality (city or county).}
+#' \item{county}{Alternate format for the name of the locality.}
 #' \item{HealthDistrict}{VDH health district the locality belongs to.}
 #' \item{week}{Week number, counting from the beginning of the year.}
 #' \item{cases}{New cases in the locality for the week.}

@@ -5,11 +5,12 @@
 \alias{vaweeklycases}
 \title{Weekly new cases by locality}
 \format{
-Data frame with 8 columns
+Data frame with 9 columns
 \describe{
 \item{date}{Date of the last day of the week.}
 \item{fips}{FIPS code for the locality.}
 \item{locality}{Name of the locality (city or county).}
+\item{county}{Alternate format for the name of the locality.}
 \item{HealthDistrict}{VDH health district the locality belongs to.}
 \item{week}{Week number, counting from the beginning of the year.}
 \item{cases}{New cases in the locality for the week.}

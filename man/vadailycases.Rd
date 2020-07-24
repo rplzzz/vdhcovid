@@ -5,11 +5,12 @@
 \alias{vadailycases}
 \title{Daily cumulative cases by locality}
 \format{
-Data frame with 7 columns
+Data frame with 8 columns
 \describe{
 \item{date}{Date of the report.}
 \item{fips}{FIPS code for the locality.}
 \item{locality}{Name of the locality (city or county).}
+\item{county}{Alternate format for the name of the locality.}
 \item{HealthDistrict}{VDH health district the locality belongs to.}
 \item{cases}{Cumulative COVID-19 cases in the locality.}
 \item{hosp}{Cumulative hospitalizations for COVID-19 in the locality.}
