@@ -4,8 +4,9 @@ library(here)
 
 source(here('data-raw','constants.R'))
 
-dataurl <-
-  'https://www.vdh.virginia.gov/content/uploads/sites/182/2020/05/VDH-COVID-19-PublicUseDataset-Tests_by-LabReportDate.csv'
+dataurl <- 'https://data.virginia.gov/api/views/3u5k-c2gr/rows.csv?accessType=DOWNLOAD'
+# API url:  'https://data.virginia.gov/resource/3u5k-c2gr.csv'
+
 ctypes <- 'cciiii'
 newdata <- read_csv(dataurl, col_types = ctypes) %>%
   select(date=`Lab Report Date`,
@@ -14,7 +15,7 @@ newdata <- read_csv(dataurl, col_types = ctypes) %>%
          npos=`Number of Positive PCR Testing Encounters`) %>%
   filter(date != 'Not Reported', !HealthDistrict %in% c('Out of State', 'Unknown'))
 
-newdata$date <- lubridate::ymd(newdata$date)
+newdata$date <- lubridate::mdy(newdata$date)
 newdata <- filter(newdata, date >= strt, !is.na(HealthDistrict))
 
 ## Check for changes in the data
