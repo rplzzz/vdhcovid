@@ -13,10 +13,10 @@ getpop <- function(locality=NULL, fips=NULL)
   }
 
   if(is.null(fips)) {
-    filt <- valocalities[match(locality, valocalities$locality), ]
+    filt <- vdhcovid::valocalities[match(locality, vdhcovid::valocalities$locality), ]
   }
   else {
-    filt <- valocalities[match(fips, valocalities$fips), ]
+    filt <- vdhcovid::valocalities[match(fips, vdhcovid::valocalities$fips), ]
   }
   filt$population
 }
