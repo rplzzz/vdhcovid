@@ -5,7 +5,7 @@ library('here')
 
 source(here('data-raw','constants.R'))
 
-dataurl <- 'https://www.vdh.virginia.gov/content/uploads/sites/182/2020/05/VDH-COVID-19-PublicUseDataset-Cases.csv'
+dataurl <- 'https://data.virginia.gov/api/views/bre9-aqqr/rows.csv?accessType=DOWNLOAD'
 coltypes <- 'cicciii'
 
 newdata <-
