@@ -1,9 +1,9 @@
 ---
 title: "Effective Reproduction Rate"
 output: 
-  html_document: default
-  rmarkdown::html_vignette: default
   pdf_document: default
+  rmarkdown::html_vignette: default
+  html_document: default
 vignette: >
   %\VignetteIndexEntry{Effective Reproduction Rate}
   %\VignetteEncoding{UTF-8}
@@ -13,11 +13,12 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
+  echo=FALSE,
   comment = "#>"
 )
 ```
 
-```{r setup}
+```{r setup, message=FALSE, warning=FALSE}
 library(vdhcovid)
 library(dplyr)
 library(ggplot2)
@@ -26,7 +27,7 @@ library(cowplot)
 ```
 
 Estimates of effective reproduction rate $R_t$.  Testing data is current through
-`r max(vaweeklytests$date)`
+`r max(vadailytests$date)`.  Case count data is current through `r max(vadailycases$date)`.
 
 ## Intermediate results
 
