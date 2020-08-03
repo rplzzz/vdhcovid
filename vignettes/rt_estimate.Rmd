@@ -1,0 +1,157 @@
+---
+title: "Effective Reproduction Rate"
+output: 
+  html_document: default
+  rmarkdown::html_vignette: default
+  pdf_document: default
+vignette: >
+  %\VignetteIndexEntry{Effective Reproduction Rate}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(vdhcovid)
+library(dplyr)
+library(ggplot2)
+library(ggthemes)
+library(cowplot)
+```
+
+Estimates of effective reproduction rate $R_t$.  Testing data is current through
+`r max(vaweeklytests$date)`
+
+## Intermediate results
+
+```{r adjustedcases}
+## First, adjust cases counts for the number of tests done.  We only know the test 
+## counts at the health district level, so we'll just use that adjustment for all
+## localities in the district.
+countycases <- select(vadailycases, date, fips, locality, HealthDistrict, cumcases=cases)
+countycases <- group_by(countycases, fips) %>% mutate(cases = c(cumcases[1], diff(cumcases)))
+districttests <- 
+  mutate(vadailytests, fpos = npos / ntest) %>%
+  select(date, HealthDistrict, ntest, fpos)
+countycases <- 
+  left_join(countycases, districttests, by=c('date','HealthDistrict')) %>%
+  filter(!is.na(ntest))
+countycases$t <- as.numeric(countycases$date - as.Date('2020-01-01'))
+adjustment <- 1000/countycases$ntest
+countycases$adjusted_cases <- adjustment * countycases$cases
+countycases$weight <- 1/adjustment
+countycases$ladjcase <- log(pmax(countycases$adjusted_cases, 0.1))
+```
+
+### Smoothed adjusted cases
+
+Plots of daily new cases, adjusted for the number of tests performed.  Each line is
+a locality, and localities are grouped by health district.  Cases are
+recorded at the locality level, while number of tests is recorded at the district
+level, so the units here are cases in the locality per thousand cases in the district.
+For districts that comprise a single locality, like Arlington, this is equivalent 
+to the test positivity rate in units of permille.  For multi-locality districts, the
+plotted figure will be less than the actual test positivity rate, since the number 
+of cases is being divided by the number of tests done in the whole district, not
+just the number of tests done in the locality.
+
+
+```{r smoothing}
+## Fit loess smoothing to log of adjusted cases.  We will use this to estimate 
+## growth rates.
+smooth_county <- function(df, group) {
+  fit <- loess(ladjcase~t, df, df$weight, span=0.25)
+  df$smoothlogcase <- predict(fit)
+  df$smoothcase <- exp(df$smoothlogcase)
+  df
+}
+countycases <- 
+  group_by(countycases, fips) %>% 
+  group_modify(smooth_county)
+
+```
+
+```{r plotadjcases, fig.height=9}
+ggplot(countycases, aes(x=date, y=smoothcase, color=locality)) + geom_line(show.legend = FALSE) + facet_wrap(~HealthDistrict, scales='free_y', ncol=4) + ylab('Smoothed adjusted cases') + theme_bw()
+
+```
+
+### Raw growth rates
+
+Growth rates (i.e., derivative of log cases), unadjusted for sample enrichment
+effects.
+
+```{r growthrates, fig.height=9}
+county_growth <- function(df, group) {
+  N <- nrow(df)
+  i <- seq(1, N)
+  ilo <- pmax(1, i-1)
+  ihi <- pmin(N, i+1)
+  df$growthrate <- (df$smoothlogcase[ihi]-df$smoothlogcase[ilo]) / (df$t[ihi]-df$t[ilo])
+  df
+}
+countycases <-
+  group_by(countycases, fips) %>%
+  group_modify(county_growth) %>%
+  mutate(pctgr = (exp(growthrate)-1)*100)
+
+ggplot(countycases, aes(x=date, y=pctgr, color=locality)) + geom_line(show.legend = FALSE) + facet_wrap(~HealthDistrict, scales='free_y', ncol=4) + ylab('Growth Rate (pct)') + theme_bw()
+
+```
+
+### Adjusted growth rates
+
+These growth rates are adusted for enrichment.  We assume that overall prevalence
+is low enough that we can use the approximation in our paper, for which the adjustment
+depends only on the observed positive test fraction.  We use the positive test fraction
+for each health district to adjust all of the localities within that district.  
+In the early days the number of tests was small, and we would sometimes see 1/1 
+positive tests for a 100% positive test fraction.  To deal with this, we cap the
+positive test fraction at 50%.  At no time since the number of tests climbed to 
+more than a hundred a day has it been higher than this anywhere.
+
+```{r adjgrowth, fig.height=9}
+countycases$adjgrowth <- countycases$growthrate / (1 - pmin(0.5, countycases$fpos))
+
+ggplot(countycases, aes(x=date, y=adjgrowth, color=locality)) + geom_line(show.legend = FALSE) + facet_wrap(~HealthDistrict, scales='free_y', ncol=4) + ylab('Growth Rate (pct)') + theme_bw()
+```
+
+## Effective reproduction number
+
+We calculate the effective reproduction number from the adjusted growth rates, using
+the equation $R_t = 1 + kD$, where $D$ is the serial interval.  To do this, we 
+have to estimate a value for $D$.  Estimates of $D$ vary dramatically in the literature.
+Here we use $D=6$, which is the value favored by our model and is within the range
+of uncertainties reported in the literature.  Occasionally regions show extremely
+high growth rates for short periods of time, typically early in the infection when
+case counts are low.  We believe such measurements are artifacts; therefore, we 
+cut off the display for $R_t$ values at 3.5.
+
+```{r rtvals}
+D <- 6
+countycases$rt <- pmax(0, 1 + countycases$adjgrowth * D)
+
+plotrtdist <- function(district)
+{
+  dat <- filter(countycases, HealthDistrict==district)
+  ggplot(dat, aes(x=date, y=rt, color=locality)) + geom_line(size=1) + 
+    #scale_color_solarized() +
+    coord_cartesian(ylim=c(0,3.5)) +
+    ggtitle(district) +
+    theme_bw() #+
+    #theme(legend.position='top')
+}
+
+alldistricts <- unique(countycases$HealthDistrict)
+districtplots <- lapply(alldistricts, plotrtdist)
+pltgroups <- seq_along(alldistricts) %% 4
+for(plt in districtplots) {
+  print(plt)
+}
+```
