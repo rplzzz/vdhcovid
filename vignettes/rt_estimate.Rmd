@@ -26,7 +26,8 @@ library(ggthemes)
 library(cowplot)
 ```
 
-Estimates of effective reproduction rate $R_t$.  Testing data is current through
+Estimates of effective reproduction rate $R_t$.  This is vdhcovid v`r packageVersion('vdhcovid')`.
+Testing data is current through
 `r max(vadailytests$date)`.  Case count data is current through `r max(vadailycases$date)`.
 
 ## Intermediate results
@@ -133,7 +134,8 @@ for each health district to adjust all of the localities within that district.
 In the early days the number of tests was small, and we would sometimes see 1/1 
 positive tests for a 100% positive test fraction.  To deal with this, we cap the
 positive test fraction at 50%.  At no time since the number of tests climbed to 
-more than a hundred a day has it been higher than this anywhere.
+more than a hundred a day has it been higher than this anywhere. (Unlike the raw
+growth rates, these have not been converted to percentages.)
 
 ```{r adjgrowth, fig.height=9}
 countycases$adjgrowth <- countycases$growthrate / (1 - pmin(0.5, countycases$fpos))
