@@ -1,0 +1,118 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r setup}
+library('dplyr')
+library('ggplot2')
+library('ggthemes')
+library('vdhcovid')
+```
+
+
+```{r adjustedcases}
+## First, adjust cases counts for the number of tests done.  We only know the test 
+## counts at the health district level, so we'll just use that adjustment for all
+## localities in the district.
+countycases <- 
+  select(vadailycases, date, fips, locality, HealthDistrict, cumcases=cases) %>%
+  filter(HealthDistrict == 'Thomas Jefferson')
+countycases <- group_by(countycases, fips) %>% 
+  mutate(cases = c(cumcases[1], diff(cumcases))) %>%
+  ungroup()
+
+districttests <- 
+  mutate(vadailytests, fpos = npos / ntest) %>%
+  select(date, HealthDistrict, ntest, fpos, npos)
+countycases <- 
+  left_join(countycases, districttests, by=c('date','HealthDistrict')) %>%
+  filter(!is.na(ntest))
+countycases$t <- as.numeric(countycases$date - as.Date('2020-01-01'))
+adjustment <- 1000/countycases$ntest
+countycases$adjusted_cases <- adjustment * countycases$cases
+countycases$weight <- 1/adjustment
+countycases$ladjcase <- log(pmax(countycases$adjusted_cases, 0.1))
+
+districtcases <- group_by(countycases, HealthDistrict, date) %>%
+  summarise(cases=sum(cases), ntest=ntest[1], npos=npos[1], fpos=fpos[1])
+districtcases$t <- as.numeric(districtcases$date - as.Date('2020-01-01'))
+adjustment <- 1000 / districtcases$ntest
+districtcases$adjusted_cases <- adjustment * districtcases$cases
+districtcases$weight <- 1/adjustment
+districtcases$ladjcase <- log(pmax(districtcases$adjusted_cases, 0.1))
+```
+
+```{r smoothing}
+## Fit loess smoothing to log of adjusted cases.  We will use this to estimate 
+## growth rates.
+smoothing_span <- 0.5
+smooth_county <- function(df, group) {
+  fit <- loess(ladjcase~t, df, df$weight, span=smoothing_span)
+  df$smoothlogcase <- predict(fit)
+  df$smoothcase <- exp(df$smoothlogcase)
+  df
+}
+countycases <- 
+  group_by(countycases, fips) %>% 
+  group_modify(smooth_county)
+
+districtcases <-
+  group_by(districtcases, HealthDistrict) %>%
+  group_modify(smooth_county)
+
+```
+
+```{r plot_logcases}
+ggplot(mapping=aes(x=date, y=smoothlogcase)) +
+  geom_line(data=countycases, mapping=aes(color=locality), size=0.9) +
+  geom_line(data=districtcases, size=1.2) +
+  scale_color_solarized() +
+  theme_bw()
+
+ggplot(data=districtcases, mapping=aes(x=date)) +
+  geom_line(mapping=aes(y=smoothlogcase), size=1.2) +
+  geom_point(mapping=aes(y=ladjcase), size=1.5) +
+  theme_bw()
+
+```
+
+```{r extrapolate}
+dayspan <- 4
+extraplen <- 21
+extrapolate <- function(df, group)
+{
+  i2 <- which.max(df$date)
+  i1 <- i2 - dayspan
+  
+  m <- (df$smoothlogcase[i2] - df$smoothlogcase[i1]) / as.numeric(df$date[i2] - df$date[i1])
+  
+  extrapx <- seq(1,extraplen)
+  smoothlogcase <- df$smoothlogcase[i2]+ m*extrapx
+  
+  extrapt <- df$t[i2] + extrapx
+  extrapdate <- df$date[i2] + extrapx
+  
+  tibble(t = extrapt, date = extrapdate, smoothlogcase = smoothlogcase, 
+         smoothcase = exp(smoothlogcase))
+}
+
+extrapcounty <- 
+  group_by(countycases, locality) %>%
+  group_modify(extrapolate)
+
+extrapdist <- 
+  group_by(districtcases, HealthDistrict) %>%
+  group_modify(extrapolate)
+
+extrapdistalt <- 
+  group_by(extrapcounty, t, date) %>%
+  summarise(smoothcase = sum(smoothcase))
+
+ggplot(mapping=aes(x=date, y=smoothcase)) +
+  geom_line(data=districtcases, color='black', size=1.2) +
+  geom_line(data=extrapdist, color='red', size=1.2) +
+  geom_line(data=extrapdistalt, color='blue', size=0.9) +
+  theme_bw()
+
+```
