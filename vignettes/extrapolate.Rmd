@@ -12,12 +12,16 @@ library('vdhcovid')
 
 
 ```{r adjustedcases}
+## VDH case and test reports trickle in over a period of a few days; therefore,
+## the last few days of reports are subject to substantial revision.
+datemax <- pmin(max(vadailycases$date), max(vadailytests$date)) - 2
+
 ## First, adjust cases counts for the number of tests done.  We only know the test 
 ## counts at the health district level, so we'll just use that adjustment for all
 ## localities in the district.
 countycases <- 
   select(vadailycases, date, fips, locality, HealthDistrict, cumcases=cases) %>%
-  filter(HealthDistrict == 'Thomas Jefferson')
+  filter(HealthDistrict == 'Thomas Jefferson', date <= datemax)
 countycases <- group_by(countycases, fips) %>% 
   mutate(cases = c(cumcases[1], diff(cumcases))) %>%
   ungroup()
@@ -32,6 +36,7 @@ countycases$t <- as.numeric(countycases$date - as.Date('2020-01-01'))
 adjustment <- 1000/countycases$ntest
 countycases$adjusted_cases <- adjustment * countycases$cases
 countycases$weight <- 1/adjustment
+#countycases$weight <- 1
 countycases$ladjcase <- log(pmax(countycases$adjusted_cases, 0.1))
 ```
 
@@ -53,12 +58,22 @@ countycases <-
 districtcases <-
   group_by(countycases, date, t, HealthDistrict) %>%
   summarise(cumcases = sum(cumcases), cases=sum(cases), ntest=mean(ntest),
-            fpos=mean(fpos), npos=mean(npos), adjusted_cases=sum(adjusted_cases),
-            smoothcase=sum(smoothcase)) %>%
-  mutate(ladjcase = log(adjusted_cases), smoothlogcase = log(smoothcase))
+            fpos=mean(fpos), npos=mean(npos), adjusted_cases=sum(adjusted_cases)) %>%
+  mutate(ladjcase = log(pmax(adjusted_cases,1)), weight=1/ntest) %>%
+  ungroup() %>%
+  group_by(HealthDistrict) %>%
+  group_modify(smooth_county) %>%
+  ungroup()
 ```
 
 ```{r plot_logcases}
+
+ggplot(countycases, mapping=aes(x=date, color=locality)) +
+  geom_line(mapping=aes(y=smoothlogcase), size=1.2) +
+  geom_point(mapping=aes(y=ladjcase), size=1.2) +
+  theme_bw()
+         
+
 ggplot(mapping=aes(x=date, y=smoothlogcase)) +
   geom_line(data=countycases, mapping=aes(color=locality), size=0.9) +
   geom_line(data=districtcases, size=1.2) +
@@ -68,6 +83,13 @@ ggplot(mapping=aes(x=date, y=smoothlogcase)) +
 ggplot(data=districtcases, mapping=aes(x=date)) +
   geom_line(mapping=aes(y=smoothlogcase), size=1.2) +
   geom_point(mapping=aes(y=ladjcase), size=1.5) +
+  stat_smooth(mapping=aes(y=ladjcase), span = smoothing_span) +
+  theme_bw()
+
+ggplot(data=districtcases, mapping=aes(x=date)) +
+  geom_line(mapping=aes(y=smoothcase), size=1.2) +
+  geom_point(mapping=aes(y=adjusted_cases), size=1.5) +
+  stat_smooth(mapping=aes(y=adjusted_cases), span = smoothing_span) +
   theme_bw()
 
 ```
@@ -104,18 +126,39 @@ extrapdistalt <-
   group_by(extrapcounty, t, date) %>%
   summarise(smoothcase = sum(smoothcase), smoothlogcase=log(sum(smoothcase)))
 
+## Adjust the district figures to reflect the number of tests actually being done
+## recently (past week).
+tmax <- max(districtcases$t)
+t1 <- tmax - 7
+ntestmean <- mean(districtcases$ntest[districtcases$t > t1])
+cfac <- ntestmean / 1000
+lcfac <- log(cfac)
+
+ntadjust <- function(df) {
+  df$smoothcase <- df$smoothcase * cfac
+  df$smoothlogcase <- df$smoothlogcase + lcfac
+  df  
+}
+ntdistrictcases <- ntadjust(districtcases)
+ntdistrictcases$adjusted_cases <- districtcases$adjusted_cases * cfac
+ntdistrictcases$ladjcase <- districtcases$ladjcase + lcfac
+ntextrapdist <- ntadjust(extrapdist)
+ntextrapdistalt <- ntadjust(extrapdistalt)
+
+
+
 ggplot(mapping=aes(x=date, y=smoothcase)) +
-  geom_line(data=districtcases, color='black', size=1.2) +
-  geom_line(data=extrapdist, mapping=aes(color='District'), size=1.2) +
-  geom_line(data=extrapdistalt, mapping=aes(color='Sum of counties'), size=1.2) +
-  scale_color_manual(values=c('red','blue'), name='Method') +
+  geom_line(data=ntdistrictcases, mapping=aes(color='Historical'), size=1.2) +
+  geom_point(data=ntdistrictcases, mapping=aes(y=adjusted_cases), color='black') +
+  geom_line(data=ntextrapdist, mapping=aes(color='Extrapolated'), size=1.2) +
+  scale_color_manual(values=c('red','black'), name='Source') +
   ylab('Adjusted daily new cases') +
   theme_bw()
 
 ggplot(mapping=aes(x=date, y=smoothlogcase)) +
-  geom_line(data=districtcases, color='black', size=1.2) +
-  geom_line(data=extrapdist, mapping=aes(color='District'), size=1.2) +
-  geom_line(data=extrapdistalt, mapping=aes(color='Sum of counties'), size=1.2) +
+  geom_line(data=ntdistrictcases, color='black', size=1.2) +
+  geom_line(data=ntextrapdist, mapping=aes(color='District'), size=1.2) +
+  geom_line(data=ntextrapdistalt, mapping=aes(color='Sum of counties'), size=1.2) +
   scale_color_manual(values=c('red','blue'), name='Method') +
   ylab('Log(adjusted new cases)') +
   theme_bw()
