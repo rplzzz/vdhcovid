@@ -77,8 +77,9 @@ just the number of tests done in the locality.
 ```{r smoothing}
 ## Fit loess smoothing to log of adjusted cases.  We will use this to estimate 
 ## growth rates.
+smoothingspan <- 0.5
 smooth_county <- function(df, group) {
-  fit <- loess(ladjcase~t, df, df$weight, span=0.25)
+  fit <- loess(ladjcase~t, df, df$weight, span=smoothingspan)
   df$smoothlogcase <- predict(fit)
   df$smoothcase <- exp(df$smoothlogcase)
   df
@@ -122,6 +123,9 @@ districtcases <-
   group_modify(county_growth)
 
 ggplot(countycases, aes(x=date, y=pctgr, color=locality)) + geom_line(show.legend = FALSE) + facet_wrap(~HealthDistrict, scales='free_y', ncol=4) + ylab('Growth Rate (pct)') + theme_bw()
+
+#ggplot(filter(districtcases, HealthDistrict=='Thomas Jefferson'), aes(x=date, y=pctgr, color=locality)) +
+  
 
 ```
 
