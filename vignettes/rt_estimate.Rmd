@@ -33,10 +33,16 @@ Testing data is current through
 ## Intermediate results
 
 ```{r adjustedcases}
+## Exclude the last couple of days of data, as the data (especially the number of tests
+## gets a lot of revision in the first couple of days)
+datemax <- pmin(max(vadailycases$date), max(vadailytests$date)) - 2
+
 ## First, adjust cases counts for the number of tests done.  We only know the test 
 ## counts at the health district level, so we'll just use that adjustment for all
 ## localities in the district.
-countycases <- select(vadailycases, date, fips, locality, HealthDistrict, cumcases=cases)
+countycases <- 
+  select(vadailycases, date, fips, locality, HealthDistrict, cumcases=cases) %>%
+  filter(date <= datemax)
 countycases <- group_by(countycases, fips) %>% mutate(cases = c(cumcases[1], diff(cumcases)))
 districttests <- 
   mutate(vadailytests, fpos = npos / ntest) %>%
@@ -77,11 +83,15 @@ just the number of tests done in the locality.
 ```{r smoothing}
 ## Fit loess smoothing to log of adjusted cases.  We will use this to estimate 
 ## growth rates.
-smoothingspan <- 0.5
+smoothingspan <- 0.25
 smooth_county <- function(df, group) {
   fit <- loess(ladjcase~t, df, df$weight, span=smoothingspan)
   df$smoothlogcase <- predict(fit)
   df$smoothcase <- exp(df$smoothlogcase)
+
+##  fit <- loess(adjusted_cases~t, df, df$weight, span=smoothingspan)
+##  df$smoothcase <- predict(fit)
+##  df$smoothlogcase <- log(df$smoothcase)
   df
 }
 countycases <- 
@@ -105,12 +115,49 @@ Growth rates (i.e., derivative of log cases), unadjusted for sample enrichment
 effects.
 
 ```{r growthrates, fig.height=9}
+gr_window <- 3                  # Number of days +/- for calculating growth rate
 county_growth <- function(df, group) {
   N <- nrow(df)
   i <- seq(1, N)
-  ilo <- pmax(1, i-1)
-  ihi <- pmin(N, i+1)
-  df$growthrate <- (df$smoothlogcase[ihi]-df$smoothlogcase[ilo]) / (df$t[ihi]-df$t[ilo])
+  ilo <- pmax(1, i-gr_window)
+  ihi <- pmin(N, i+gr_window)
+  
+  ## Days near the edges of the dataset will have fewer than the required number 
+  ## of data points.  Widen the window in the other direction.
+  iloadjust <- pmax(0, gr_window - (ihi-i))
+  ihiadjust <- pmax(0, gr_window - (i-ilo))
+  
+  ilo <- ilo - iloadjust
+  ihi <- ihi + ihiadjust
+  
+  calcgr <- function(i) {
+    i1 <- ilo[i]
+    i2 <- ihi[i]
+    dd <- df[seq(i1,i2),]
+    modsm <- lm(smoothlogcase~t, dd)
+    modunsm <- lm(ladjcase~t, dd)
+    smodsm <- suppressWarnings(summary(modsm))
+    smodunsm <- suppressWarnings(summary(modunsm))
+    m <- smodsm$coefficients[2,1]
+    sig <- 2*smodunsm$coefficients[2, 2]
+    c(gr=m, grsig = sig)
+  }
+  
+  gr <- sapply(i, calcgr)
+  df$growthrate <- gr['gr',]
+  df$growthratesig <- gr['grsig',]
+  
+  # grsm <- (df$smoothlogcase[ihi]-df$smoothlogcase[ilo]) / (df$t[ihi]-df$t[ilo])
+  # grunsm <- (df$ladjcase[ihi]-df$ladjcase[ilo]) / (df$t[ihi]-df$t[ilo])
+  # calcsig <- function(i) {
+  #   i1 <- ilo[i]
+  #   i2 <- ihi[i]
+  #   sd(grunsm[seq(i1,i2)])
+  # }
+  # 
+  # df$growthrate <- grsm
+  # df$growthratesig <- sapply(i, calcsig)
+  
   df
 }
 countycases <-
@@ -120,11 +167,15 @@ countycases <-
 
 districtcases <-
   group_by(districtcases, HealthDistrict) %>%
-  group_modify(county_growth)
+  group_modify(county_growth) %>%
+  mutate(grlo = growthrate-growthratesig, grhi = growthrate+growthratesig)
 
 ggplot(countycases, aes(x=date, y=pctgr, color=locality)) + geom_line(show.legend = FALSE) + facet_wrap(~HealthDistrict, scales='free_y', ncol=4) + ylab('Growth Rate (pct)') + theme_bw()
 
-#ggplot(filter(districtcases, HealthDistrict=='Thomas Jefferson'), aes(x=date, y=pctgr, color=locality)) +
+ggplot(filter(districtcases, HealthDistrict=='Thomas Jefferson'), aes(x=date, y=growthrate)) +
+  geom_line(size=1.2) +
+  geom_ribbon(mapping=aes(ymin=grlo, ymax=grhi), alpha=0.4) +
+  theme_bw()
   
 
 ```
@@ -144,9 +195,14 @@ growth rates, these have not been converted to percentages.)
 ```{r adjgrowth, fig.height=9}
 countycases$adjgrowth <- countycases$growthrate / (1 - pmin(0.5, countycases$fpos))
 districtcases$adjgrowth <- districtcases$growthrate / (1 - pmin(0.5, districtcases$fpos))
+adjgrsig <- districtcases$growthratesig / (1 - pmin(0.5, districtcases$fpos))
+districtcases$agrlo <- districtcases$adjgrowth - adjgrsig
+districtcases$agrhi <- districtcases$adjgrowth + adjgrsig
 
 ggplot(districtcases, aes(x=date, y=adjgrowth)) + geom_line(size=1.2) +
-  facet_wrap(~HealthDistrict, scales='free_y', ncol=4) + ylab('Growth Rate')+ theme_bw()
+  #geom_ribbon(mapping=aes(ymin=agrlo, ymax=agrhi), alpha=0.4) +
+  facet_wrap(~HealthDistrict, scales='free_y', ncol=4) + 
+  ylab('Growth Rate')+ theme_bw()
 
 ggplot(countycases, aes(x=date, y=adjgrowth, color=locality)) + geom_line(show.legend = FALSE) + facet_wrap(~HealthDistrict, scales='free_y', ncol=4) + ylab('Growth Rate') + theme_bw()
 ```
@@ -167,6 +223,8 @@ cut off the display for $R_t$ values at 3.5.
 D <- 6
 countycases$rt <- pmax(0, 1 + countycases$adjgrowth * D)
 districtcases$rt <- pmax(0, 1 + districtcases$adjgrowth * D)
+districtcases$rtlo <- pmax(0, 1 + districtcases$agrlo * D)
+districtcases$rthi <- pmax(0, 1 + districtcases$agrhi * D)
 alldistricts <- unique(districtcases$HealthDistrict)
 
 ### Make plots of locality Rt, grouped by district
@@ -178,7 +236,8 @@ plotrtrgn <- function(district, alldata, locality=TRUE)
     pltbase <- ggplot(dat, aes(x=date, y=rt, color=locality))
   }
   else {
-    pltbase <- ggplot(dat, aes(x=date, y=rt)) + geom_hline(yintercept=1, color='blue')
+    pltbase <- ggplot(dat, aes(x=date, y=rt)) + geom_hline(yintercept=1, color='blue') #+
+      #geom_ribbon(mapping=aes(ymin=rtlo, ymax=rthi), alpha=0.4)
   }
   
   pltbase + geom_line(size=1) + 

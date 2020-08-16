@@ -54,21 +54,25 @@ countycases_s050 <-
   group_modify(smooth_county) %>%
   ungroup()
 
-countycases_s015 <- 
+countycases_s025 <- 
   group_by(countycases, fips) %>% 
-  group_modify(function(df, g) {smooth_county(df, g, smoothing_span=0.15)}) %>%
+  group_modify(function(df, g) {smooth_county(df, g, smoothing_span=0.25)}) %>%
   ungroup()
 
 districtcases_base <-
   group_by(countycases, date, t, HealthDistrict) %>%
   summarise(cumcases = sum(cumcases), cases=sum(cases), ntest=mean(ntest),
             fpos=mean(fpos), npos=mean(npos), adjusted_cases=sum(adjusted_cases)) %>%
-  mutate(ladjcase = log(pmax(adjusted_cases,1)), weight=1/ntest) %>%
+  mutate(ladjcase = log(pmax(adjusted_cases,1)), weight=ntest/1000) %>%
   ungroup() %>%
   group_by(HealthDistrict)
   
 districtcases_s050 <- 
   group_modify(districtcases_base, smooth_county) %>%
+  ungroup()
+
+districtcases_s025 <-
+  group_modify(districtcases_base, function(df, g) {smooth_county(df,g, smoothing_span=0.25)}) %>%
   ungroup()
 
 districtcases_s015 <-
@@ -112,8 +116,12 @@ extrapdist_s050 <-
   group_by(districtcases_s050, HealthDistrict) %>%
   group_modify(extrapolate)
 
-extrapcounty_s015 <- 
-  group_by(countycases_s015, locality) %>%
+extrapcounty_s025 <- 
+  group_by(countycases_s025, locality) %>%
+  group_modify(extrapolate)
+
+extrapdist_s025 <- 
+  group_by(districtcases_s025, HealthDistrict) %>%
   group_modify(extrapolate)
 
 extrapdist_s015 <- 
@@ -137,11 +145,17 @@ ntadjust <- function(df) {
 ntdistrictcases_s050 <- ntadjust(districtcases_s050)
 ntdistrictcases_s050$adjusted_cases <- districtcases_s050$adjusted_cases * cfac
 ntdistrictcases_s050$ladjcase <- districtcases_s050$ladjcase + lcfac
+
+ntdistrictcases_s025 <- ntadjust(districtcases_s025)
+ntdistrictcases_s025$adjusted_cases <- districtcases_s025$adjusted_cases * cfac
+ntdistrictcases_s025$ladjcase <- districtcases_s025$ladjcase + lcfac
+
 ntdistrictcases_s015 <- ntadjust(districtcases_s015)
 ntdistrictcases_s015$adjusted_cases <- districtcases_s015$adjusted_cases * cfac
 ntdistrictcases_s015$ladjcase <- districtcases_s015$ladjcase + lcfac
 
 ntextrapdist_s050 <- ntadjust(extrapdist_s050)
+ntextrapdist_s025 <- ntadjust(extrapdist_s025)
 ntextrapdist_s015 <- ntadjust(extrapdist_s015)
 
 
@@ -152,6 +166,16 @@ ggplot(mapping=aes(x=date, y=smoothcase)) +
   geom_line(data=ntextrapdist_s050, mapping=aes(color='Extrapolated'), size=1.2) +
   scale_color_manual(values=c('red','black'), name='Source') +
   ylab('Adjusted daily new cases') +
+  ggtitle('Smoothing span = 0.5') +
+  theme_bw()
+
+ggplot(mapping=aes(x=date, y=smoothcase)) +
+  geom_line(data=ntdistrictcases_s025, mapping=aes(color='Historical'), size=1.2) +
+  geom_point(data=ntdistrictcases_s025, mapping=aes(y=adjusted_cases), color='black') +
+  geom_line(data=ntextrapdist_s025, mapping=aes(color='Extrapolated'), size=1.2) +
+  scale_color_manual(values=c('red','black'), name='Source') +
+  ylab('Adjusted daily new cases') +
+  ggtitle('Smoothing span = 0.25') +
   theme_bw()
 
 ggplot(mapping=aes(x=date, y=smoothcase)) +
@@ -160,6 +184,7 @@ ggplot(mapping=aes(x=date, y=smoothcase)) +
   geom_line(data=ntextrapdist_s015, mapping=aes(color='Extrapolated'), size=1.2) +
   scale_color_manual(values=c('red','black'), name='Source') +
   ylab('Adjusted daily new cases') +
+  ggtitle('Smoothing span = 0.15') +
   theme_bw()
 
 
