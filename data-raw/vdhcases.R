@@ -1,6 +1,7 @@
 ## code to prepare `vdhcases` dataset goes here
 
 library('readr')
+library('dplyr')
 library('here')
 
 source(here('data-raw','constants.R'))
@@ -54,7 +55,7 @@ stopifnot(all(vaweeklycases$diffweek == 1))
 vaweeklycases <- select(vaweeklycases, -nday, -diffweek)
 
 ## Fix the locality names
-loctbl <- select(valocalities, fips, locality)
+loctbl <- select(vdhcovid::valocalities, fips, locality)
 vadailycases <- rename(vadailycases, county=locality) %>%
   left_join(loctbl, by='fips')
 vaweeklycases <- rename(vaweeklycases, county=locality) %>%
