@@ -48,7 +48,15 @@ impute_tests <- function(df, grouping)
   rows <- order(df$distpopfrac, decreasing=TRUE)
 
   ntest <- df$neff[1] - sum(df$ntest_local)   # remaining tests to allocate
-  stopifnot(ntest >= 0)
+  if(ntest <= 0) {
+    ## This shouldn't be possible; it means there were more cases than tests
+    ## performed in the district, but it looks like it sometimes happens when we
+    ## run an update midweek and the data hasn't been fully reported.
+    warning('ntest not > 0.  neff= ', df$neff[1], '  total local cases: ', sum(df$ntest_local))
+    print(grouping)
+    print(df)
+    ntest <- 0
+  }
   pop <- sum(df$population)       # population in unimputed localities
 
   for(irow in rows) {
