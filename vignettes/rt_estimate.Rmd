@@ -107,6 +107,8 @@ districtcases <-
 ```{r plotadjcases, fig.height=9}
 ggplot(countycases, aes(x=date, y=smoothcase, color=locality)) + geom_line(show.legend = FALSE) + facet_wrap(~HealthDistrict, scales='free_y', ncol=4) + ylab('Smoothed adjusted cases') + theme_bw()
 
+ggplot(districtcases, aes(x=date, y=smoothcase)) + geom_line(show.legend = FALSE) + facet_wrap(~HealthDistrict, scales='free_y', ncol=4) + ylab('Smoothed adjusted cases') + theme_bw()
+
 ```
 
 ### Raw growth rates
