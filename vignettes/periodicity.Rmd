@@ -41,6 +41,7 @@ ps <- fft(dailytotal$ntest_detrend)[1:Nhalf]
 f <- (seq_along(ps) - 1) / N
 pltps <- data.frame(f=f, ps=Mod(ps))
 ggplot(pltps, aes(x=f, y=ps)) + 
+  geom_vline(color='red', xintercept = 1/7, linetype=2) +
   geom_col(width=0.25*f[2], fill='MidnightBlue') + 
   ylab('Spectral density') +
   xlab('Frequency (1/day)') +

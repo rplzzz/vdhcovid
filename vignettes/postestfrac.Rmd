@@ -40,6 +40,61 @@ plotdist <- function(district, yrng=NULL)
   }
 }
 
+testposcmp <- function(district=NA, mindate=as.Date('2020-07-01'))
+{
+    testdata <-
+      dplyr::select(vaweeklytests, HealthDistrict, date, ntest, npos, neff, nposeff) %>%
+      dplyr::filter(date >= mindate)
+    
+    if(!is.na(district)) {
+      testdata <- dplyr::filter(testdata, HealthDistrict == district)
+    }
+    
+    testdata <-
+      group_by(testdata, date) %>%
+      summarise(ntest=sum(ntest), npos=sum(npos), neff=sum(neff), nposeff=sum(nposeff)) %>%
+      mutate(fpos=npos/ntest, fposeff=nposeff/neff)
+    
+    rawd <- 
+      dplyr::select(testdata, date, ntest, fpos) %>%
+      tidyr::pivot_longer(-date, names_to='var') %>%
+      mutate(method = 'raw count')
+    
+    effd <-
+      dplyr::select(testdata, date, neff, fposeff) %>%
+      dplyr::rename(ntest=neff, fpos=fposeff) %>%
+      tidyr::pivot_longer(-date, names_to='var') %>%
+      mutate(method = 'effective count')
+    
+    pltdata <- dplyr::bind_rows(rawd, effd)
+    
+    ntraw <- testdata$ntest
+    fpraw <- testdata$fpos
+    rawcor <- cor(ntraw, fpraw, method='kendall')
+    
+    nteff <- testdata$neff
+    fpeff <- testdata$fposeff
+    effcor <- cor(nteff, fpeff, method='kendall')
+    
+    message('Raw correlation: ', signif(rawcor, 2))
+    message('Effective correlation: ', signif(effcor, 2))
+    
+    if(is.na(district)) {
+      titlestr = 'Statewide'
+    }
+    else {
+      titlestr = paste(district, 'district')
+    }
+    
+    ggplot(pltdata, aes(x=date, y=value, color=method)) +
+      facet_wrap(~var, ncol=1, scales='free_y') +
+      geom_line(size=1.2) +
+      ggtitle(titlestr) +
+      ylab('') +
+      scale_color_solarized() +
+      theme_bw()
+}
+
 ```
 
 ## Statewide weekly positive test fraction
