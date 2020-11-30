@@ -7,7 +7,7 @@ source(here('data-raw','constants.R'))
 dataurl <- 'https://data.virginia.gov/api/views/3u5k-c2gr/rows.csv?accessType=DOWNLOAD'
 # API url:  'https://data.virginia.gov/resource/3u5k-c2gr.csv'
 
-ctypes <- 'cciiii'
+ctypes <- 'cciiiiiiii'
 newdata <- read_csv(dataurl, col_types = ctypes) %>%
   select(date=`Lab Report Date`,
          HealthDistrict=`Health District`,
@@ -44,9 +44,9 @@ vadailytests <- arrange(newdata, date)
 t <- as.numeric(newdata$date - strt)
 newdata$week <- as.integer(floor(t/7))
 vaweeklytests <- group_by(newdata, HealthDistrict, week) %>%
-  mutate(fpos=npos/ntest) %>%
-  summarise(date=max(week)*7 + wk0date, ntest=sum(ntest), npos=sum(npos), varpos=var(fpos), nday=n()) %>%
-  mutate(fpos=npos/ntest) %>%
+  mutate(fpos=npos/ntest, sdvalid=ntest>0) %>%          # This is the daily positive fraction
+  summarise(date=max(week)*7 + wk0date, ntest=sum(ntest), npos=sum(npos), varpos=var(fpos[sdvalid]), nday=n()) %>%
+  mutate(fpos=npos/ntest) %>%          # This is the weekly positive fraction
   ungroup() %>%
   arrange(date)
 
