@@ -14,7 +14,7 @@ library('vdhcovid')
 ```{r adjustedcases}
 ## VDH case and test reports trickle in over a period of a few days; therefore,
 ## the last few days of reports are subject to substantial revision.
-datemax <- pmin(max(vadailycases$date), max(vadailytests$date)) - 2
+datemax <- pmin(max(vadailycases$date), max(vadailytests$date)) - 4
 
 ## First, adjust cases counts for the number of tests done.  We only know the test 
 ## counts at the health district level, so we'll just use that adjustment for all

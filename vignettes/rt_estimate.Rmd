@@ -35,7 +35,7 @@ Testing data is current through
 ```{r adjustedcases}
 ## Exclude the last couple of days of data, as the data (especially the number of tests
 ## gets a lot of revision in the first couple of days)
-datemax <- pmin(max(vadailycases$date), max(vadailytests$date)) - 2
+datemax <- pmin(max(vadailycases$date), max(vadailytests$date)) - 4
 
 ## First, adjust cases counts for the number of tests done.  We only know the test 
 ## counts at the health district level, so we'll just use that adjustment for all
@@ -172,13 +172,13 @@ districtcases <-
   group_modify(county_growth) %>%
   mutate(grlo = growthrate-growthratesig, grhi = growthrate+growthratesig)
 
-ggplot(countycases, aes(x=date, y=pctgr, color=locality)) + geom_line(show.legend = FALSE) + facet_wrap(~HealthDistrict, scales='free_y', ncol=4) + ylab('Growth Rate (pct)') + theme_bw()
-
-ggplot(filter(districtcases, HealthDistrict=='Thomas Jefferson'), aes(x=date, y=growthrate)) +
-  geom_line(size=1.2) +
-  geom_ribbon(mapping=aes(ymin=grlo, ymax=grhi), alpha=0.4) +
-  theme_bw()
-  
+# ggplot(countycases, aes(x=date, y=pctgr, color=locality)) + geom_line(show.legend = FALSE) + facet_wrap(~HealthDistrict, scales='free_y', ncol=4) + ylab('Growth Rate (pct)') + theme_bw()
+# 
+# ggplot(filter(districtcases, HealthDistrict=='Thomas Jefferson'), aes(x=date, y=growthrate)) +
+#   geom_line(size=1.2) +
+#   geom_ribbon(mapping=aes(ymin=grlo, ymax=grhi), alpha=0.4) +
+#   theme_bw()
+#   
 
 ```
 
@@ -201,12 +201,12 @@ adjgrsig <- districtcases$growthratesig / (1 - pmin(0.5, districtcases$fpos))
 districtcases$agrlo <- districtcases$adjgrowth - adjgrsig
 districtcases$agrhi <- districtcases$adjgrowth + adjgrsig
 
-ggplot(districtcases, aes(x=date, y=adjgrowth)) + geom_line(size=1.2) +
-  #geom_ribbon(mapping=aes(ymin=agrlo, ymax=agrhi), alpha=0.4) +
-  facet_wrap(~HealthDistrict, scales='free_y', ncol=4) + 
-  ylab('Growth Rate')+ theme_bw()
-
-ggplot(countycases, aes(x=date, y=adjgrowth, color=locality)) + geom_line(show.legend = FALSE) + facet_wrap(~HealthDistrict, scales='free_y', ncol=4) + ylab('Growth Rate') + theme_bw()
+# ggplot(districtcases, aes(x=date, y=adjgrowth)) + geom_line(size=1.2) +
+#   #geom_ribbon(mapping=aes(ymin=agrlo, ymax=agrhi), alpha=0.4) +
+#   facet_wrap(~HealthDistrict, scales='free_y', ncol=4) + 
+#   ylab('Growth Rate')+ theme_bw()
+# 
+# ggplot(countycases, aes(x=date, y=adjgrowth, color=locality)) + geom_line(show.legend = FALSE) + facet_wrap(~HealthDistrict, scales='free_y', ncol=4) + ylab('Growth Rate') + theme_bw()
 ```
 
 ## Effective reproduction number

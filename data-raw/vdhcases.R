@@ -21,6 +21,11 @@ newdata <-
   )
 newdata$date <- lubridate::mdy(newdata$date)
 
+if(any(newdata$HealthDistrict == "Blue Ridge")) {
+  message('Renaming "Blue Ridge" to "Thomas Jefferson" for backward compatibility')
+  newdata$HealthDistrict[newdata$HealthDistrict=='Blue Ridge'] <- "Thomas Jefferson"
+}
+
 ## TODO:  Check for retroactive changes here
 
 vadailycases <- arrange(newdata, date)

@@ -16,7 +16,12 @@ newdata <- read_csv(dataurl, col_types = ctypes) %>%
   filter(date != 'Not Reported', !HealthDistrict %in% c('Out of State', 'Unknown'))
 
 newdata$date <- lubridate::mdy(newdata$date)
-newdata <- filter(newdata, date >= strt, !is.na(HealthDistrict))
+newdata <- filter(newdata, date >= strt, !is.na(HealthDistrict), ntest > 0)
+
+if(any(newdata$HealthDistrict == "Blue Ridge")) {
+  message('Renaming "Blue Ridge" to "Thomas Jefferson" for backward compatibility')
+  newdata$HealthDistrict[newdata$HealthDistrict=='Blue Ridge'] <- "Thomas Jefferson"
+}
 
 ## Check for changes in the data
 chknew <- semi_join(newdata, vdhcovid::vadailytests, by=c('date', 'HealthDistrict'))
@@ -46,6 +51,8 @@ newdata$week <- as.integer(floor(t/7))
 vaweeklytests <- group_by(newdata, HealthDistrict, week) %>%
   mutate(fpos=npos/ntest, sdvalid=ntest>0) %>%          # This is the daily positive fraction
   summarise(date=max(week)*7 + wk0date, ntest=sum(ntest), npos=sum(npos), varpos=var(fpos[sdvalid]), nday=n()) %>%
+  mutate(ntest=ifelse(ntest>0, ntest, 1L)) %>%   # If there are no tests at all for a week, record one test
+                                                # to prevent divide-by-zero
   mutate(fpos=npos/ntest) %>%          # This is the weekly positive fraction
   ungroup() %>%
   arrange(date)
