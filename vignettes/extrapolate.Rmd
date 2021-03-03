@@ -43,7 +43,14 @@ countycases$ladjcase <- log(pmax(countycases$adjusted_cases, 0.1))
 ```{r smoothing}
 ## Fit loess smoothing to log of adjusted cases.  We will use this to estimate 
 ## growth rates.
-smooth_county <- function(df, group, smoothing_span=0.5) {
+reclen <- as.numeric(max(countycases$date) - min(countycases$date))
+## These spans are intended to smooth over periods of roughly 1 quarter, 1 month,
+## and one week.  In practice we double them because the cubic weighting in the loess
+## algorithm deweights points near the edge of the window pretty dramatically.
+span050 <- 2 * 90 / reclen
+span025 <- 2 * 30 / reclen
+span015 <- 2 * 7 / reclen
+smooth_county <- function(df, group, smoothing_span=span050) {
   fit <- loess(ladjcase~t, df, df$weight, span=smoothing_span)
   df$smoothlogcase <- predict(fit)
   df$smoothcase <- exp(df$smoothlogcase)
@@ -56,7 +63,7 @@ countycases_s050 <-
 
 countycases_s025 <- 
   group_by(countycases, fips) %>% 
-  group_modify(function(df, g) {smooth_county(df, g, smoothing_span=0.25)}) %>%
+  group_modify(function(df, g) {smooth_county(df, g, smoothing_span=span025)}) %>%
   ungroup()
 
 districtcases_base <-
@@ -68,15 +75,15 @@ districtcases_base <-
   group_by(HealthDistrict)
   
 districtcases_s050 <- 
-  group_modify(districtcases_base, smooth_county) %>%
+  group_modify(districtcases_base, smooth_county, smoothing_span=span050) %>%
   ungroup()
 
 districtcases_s025 <-
-  group_modify(districtcases_base, function(df, g) {smooth_county(df,g, smoothing_span=0.25)}) %>%
+  group_modify(districtcases_base, function(df, g) {smooth_county(df,g, smoothing_span=span025)}) %>%
   ungroup()
 
 districtcases_s015 <-
-  group_modify(districtcases_base, function(df, g) {smooth_county(df,g, smoothing_span=0.15)}) %>%
+  group_modify(districtcases_base, function(df, g) {smooth_county(df,g, smoothing_span=span015)}) %>%
   ungroup()
   
 
@@ -166,7 +173,7 @@ ggplot(mapping=aes(x=date, y=smoothcase)) +
   geom_line(data=ntextrapdist_s050, mapping=aes(color='Extrapolated'), size=1.2) +
   scale_color_manual(values=c('red','black'), name='Source') +
   ylab('Adjusted daily new cases') +
-  ggtitle('Smoothing span = 0.5') +
+  ggtitle('Smoothing span = Quarterly') +
   theme_bw()
 
 ggplot(mapping=aes(x=date, y=smoothcase)) +
@@ -175,7 +182,7 @@ ggplot(mapping=aes(x=date, y=smoothcase)) +
   geom_line(data=ntextrapdist_s025, mapping=aes(color='Extrapolated'), size=1.2) +
   scale_color_manual(values=c('red','black'), name='Source') +
   ylab('Adjusted daily new cases') +
-  ggtitle('Smoothing span = 0.25') +
+  ggtitle('Smoothing span = Monthly') +
   theme_bw()
 
 ggplot(mapping=aes(x=date, y=smoothcase)) +
@@ -184,7 +191,7 @@ ggplot(mapping=aes(x=date, y=smoothcase)) +
   geom_line(data=ntextrapdist_s015, mapping=aes(color='Extrapolated'), size=1.2) +
   scale_color_manual(values=c('red','black'), name='Source') +
   ylab('Adjusted daily new cases') +
-  ggtitle('Smoothing span = 0.15') +
+  ggtitle('Smoothing span = Weekly') +
   theme_bw()
 
 

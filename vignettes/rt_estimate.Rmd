@@ -82,8 +82,12 @@ just the number of tests done in the locality.
 
 ```{r smoothing}
 ## Fit loess smoothing to log of adjusted cases.  We will use this to estimate 
-## growth rates.
-smoothingspan <- 0.25
+## growth rates.  The span is intended to smooth over roughly a month worth of data.
+## However, we want the entire month to have meaningful effect on smoothing.  The 
+## loess algorithm rather dramatically deweights points near the edge of the window,
+## so we actually set the window to 60 days.  This results in 80% of the total weight
+## being on points within 1 month of the central date.
+smoothingspan <- 2 * 30 / as.numeric(max(districtcases$date) - min(districtcases$date))
 smooth_county <- function(df, group) {
   fit <- loess(ladjcase~t, df, df$weight, span=smoothingspan)
   df$smoothlogcase <- predict(fit)
