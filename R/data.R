@@ -158,3 +158,38 @@
 #' \item{stdpopdens}{Standardized average population density in the locality.}
 #' }
 "valocalities"
+
+#' Daily vaccinations by locality
+#'
+#' Number of \emph{final dose} vaccinations (total over all manufacturers)
+#' administered, by locality and date.
+#'
+#' @format Data frame with 6 columns
+#' \describe{
+#' \item{date}{Date of the observation}
+#' \item{fips}{FIPS code for the locality}
+#' \item{locality}{Name of the locality}
+#' \item{population}{Population of the locality}
+#' \item{district}{Local health district of the locality}
+#' \item{ndose}{Number of doses administered. Zero dose days are recorded explicitly.}
+#' }
+"vadailyvax"
+
+#' Weekly vaccinations by locality
+#'
+#' Number of \emph{final dose} vaccinations (total over all manufacturers) administered
+#' by locality and date.
+#'
+#' @format Data frame with o columns
+#' \describe{
+#' \item{date}{Date of the last day of the week}
+#' \item{week}{Week number}
+#' \item{fips}{FIPS code for the locality}
+#' \item{locality}{Name of the locality}
+#' \item{district}{Local health district of the locality}
+#' \item{population}{Population of the locality}
+#' \item{ndose}{Number of doses administered for the week}
+#' \item{vaxtotal}{Cumulative number of doses administered}
+#' \item{vaxfrac}{Cumulative fraction of the population vaccinated.}
+#' }
+"vaweeklyvax"
