@@ -5,7 +5,7 @@
 \alias{vadailyvax}
 \title{Daily vaccinations by locality}
 \format{
-Data frame with 6 columns
+Data frame with 8 columns
 \describe{
 \item{date}{Date of the observation}
 \item{fips}{FIPS code for the locality}
@@ -13,6 +13,8 @@ Data frame with 6 columns
 \item{population}{Population of the locality}
 \item{district}{Local health district of the locality}
 \item{ndose}{Number of doses administered. Zero dose days are recorded explicitly.}
+\item{vaxtotal}{Cumulative number of doses administered}
+\item{vaxfrac}{Cumulative fraction of the population vaccinated.}
 }
 }
 \usage{

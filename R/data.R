@@ -164,7 +164,7 @@
 #' Number of \emph{final dose} vaccinations (total over all manufacturers)
 #' administered, by locality and date.
 #'
-#' @format Data frame with 6 columns
+#' @format Data frame with 8 columns
 #' \describe{
 #' \item{date}{Date of the observation}
 #' \item{fips}{FIPS code for the locality}
@@ -172,6 +172,8 @@
 #' \item{population}{Population of the locality}
 #' \item{district}{Local health district of the locality}
 #' \item{ndose}{Number of doses administered. Zero dose days are recorded explicitly.}
+#' \item{vaxtotal}{Cumulative number of doses administered}
+#' \item{vaxfrac}{Cumulative fraction of the population vaccinated.}
 #' }
 "vadailyvax"
 

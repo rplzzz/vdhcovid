@@ -38,7 +38,10 @@ datefips <- left_join(datefips, unique(newdata[,c('fips','locality','population'
 newdata <- left_join(datefips, newdata[,c('date','fips','ndose')], by=c('date','fips'))
 newdata$ndose[is.na(newdata$ndose)] <- 0L
 
-vadailyvax <- newdata
+vadailyvax <-
+  group_by(newdata, fips) %>%
+  mutate(vaxtotal = cumsum(ndose), vaxfrac = vaxtotal/population) %>%
+  ungroup()
 
 ## Aggregate to weekly totals.
 t <- as.numeric(newdata$date - strt)         # strt defined in constants.R
@@ -51,7 +54,6 @@ vaweeklyvax <-
 
 vaweeklyvax <-
   group_by(vaweeklyvax, fips) %>%
-  group_modify(calc_cumvax) %>%
   mutate(vaxtotal = cumsum(ndose), vaxfrac = vaxtotal/population) %>%
   ungroup()
 
