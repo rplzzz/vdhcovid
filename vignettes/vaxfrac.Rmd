@@ -1,0 +1,41 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r setup}
+library('dplyr')
+library('ggplot2')
+```
+
+
+
+```{r}
+vadjust <- function(x1, x2, sat) {
+  x0 <- 0.5*(x1 + x2)
+  k <- log(100*sat - 1) / (x0-x1)
+  function(x) {
+    v <- ifelse(x >= x1, sat / (1 + exp(-k*(x-x0))), 0)
+    1 - v
+  }
+}
+
+vaxest <- data.frame(date=seq(as.Date('2021-01-01'), as.Date('2021-07-01'), by='month'),
+                     vaxfrac=1-vadjust(2, 9, 0.75)(seq(1,7)))
+```
+
+```{r}
+ggplot(filter(vaweeklyvax, district=='Thomas Jefferson'), aes(x=date, y=vaxfrac)) +
+  geom_line(size=0.8, mapping=aes(x=date, y=vaxfrac, color=locality)) +
+  geom_line(data=vaxest, size=1.25, linetype='A757') +
+  ylab('Vaccinated fraction of total population') +
+  theme_bw()
+```
+
+```{r}
+filter(vaweeklyvax, locality=='AlbemarleCounty', date < lubridate::now()) -> acvax
+ggplot(acvax, aes(x=date, y=ndose)) + geom_line(size=1.2) + 
+  ylab('Weekly final doses administered') +
+  ggtitle('Albemarle county', 'Vaccination rate over time') +
+  theme_bw()
+```
