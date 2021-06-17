@@ -6,6 +6,9 @@ output: html_notebook
 ```{r setup}
 library('dplyr')
 library('ggplot2')
+
+colors = c(AlbemarleCounty='red', Charlottesvillecity='orange', FluvannaCounty='cyan',
+           GreeneCounty='green', LouisaCounty='blue', NelsonCounty='magenta')
 ```
 
 
@@ -29,6 +32,7 @@ ggplot(filter(vaweeklyvax, district=='Thomas Jefferson'), aes(x=date, y=vaxfrac)
   geom_line(size=0.8, mapping=aes(x=date, y=vaxfrac, color=locality)) +
   geom_line(data=vaxest, size=1.25, linetype='A757') +
   ylab('Vaccinated fraction of total population') +
+  scale_color_manual(values=colors) +
   theme_bw()
 ```
 
