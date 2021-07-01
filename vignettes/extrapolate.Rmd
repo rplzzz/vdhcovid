@@ -210,6 +210,7 @@ ggplot(distcases_60day, aes(x=date)) +
   geom_line(mapping=aes(y=adjusted_cases, color='adjusted'), size=1.2) +
   geom_line(mapping=aes(y=cases, color='raw'), size=1.2) +
   scale_color_manual(values=c(raw='red', adjusted='blue')) +
+  ylab('cases') +
   coord_cartesian(ylim=c(0,25)) +
   theme_bw()
 
